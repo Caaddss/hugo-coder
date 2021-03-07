@@ -5,6 +5,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Language" content="{{ .Site.Language.Lang }}">
+    <meta name="color-scheme" content="light dark">
+    
+    {{ if .Site.Params.csp }}
+      {{ partial "csp.html" . }}
+    {{ end }}
 
     {{ with .Site.Params.author }}<meta name="author" content="{{ . }}">{{ end }}
     <meta name="description" content="{{ .Description | default (.Summary | default .Site.Params.description ) }}">
@@ -19,11 +24,10 @@
       <link rel="canonical" href="{{ .Permalink }}">
     {{ end }}
 
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CMerriweather:300,700%7CSource+Code+Pro:400,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.1.7/css/fork-awesome.min.css"
-      integrity="sha256-gsmEoJAws/Kd3CjuOQzLie5Q3yshhvmo7YNtBG7aaEY=" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8/normalize.min.css">
+    {{ $fa := resources.Get "fonts/forkawesome-webfont.woff2" }}
+    {{ $faFingerprint := $fa | fingerprint }}
+    <link rel="preload" href="{{ $fa.RelPermalink }}?v=1.1.7" as="font" type="font/woff2" integrity="{{ $faFingerprint.Data.Integrity }}" crossorigin>
+
     {{ if .Site.IsServer }}
       {{ $cssOpts := (dict "targetPath" "css/coder.css" "enableSourceMap" true ) }}
       {{ $styles := resources.Get "scss/coder.scss" | resources.ExecuteAsTemplate "style.coder.css" . | toCSS $cssOpts }}
@@ -118,7 +122,7 @@
         <script src="{{ $script.RelPermalink }}"></script>
       {{ else }}
         {{ $script := resources.Get "js/dark-mode.js" | minify | fingerprint }}
-        <script src="{{ $script.RelPermalink }}"></script>
+        <script src="{{ $script.RelPermalink }}" integrity="{{ $script.Data.Integrity }}"></script>
       {{ end }}
     {{ end }}
 
@@ -142,6 +146,14 @@
 
     {{ if and .Site.Params.cloudflare .Site.Params.cloudflare.token }}
       {{- partial "analytics/cloudflare" . -}}
+    {{ end }}
+
+    {{ if and .Site.Params.matomo .Site.Params.matomo.serverURL }}
+      {{- partial "analytics/matomo" . -}}
+    {{ end }}
+
+    {{ if and .Site.Params.googleTagManager .Site.Params.googleTagManager.id }}
+      {{- partial "analytics/googletagmanager" . -}}
     {{ end }}
   </body>
 
